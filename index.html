@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ranking de Vendas</title>
+
+<style>
+body {
+    background: #0f172a;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+    margin: 0;
+}
+
+/* ===== Campeão ===== */
+
+@keyframes girarMoeda {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
+}
+
+.campeao-card {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.foto-campeao {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    margin: 15px auto;
+    display: block;
+    animation: girarMoeda 8s linear infinite;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+/* ===== Lista ===== */
+
+.card {
+    margin: 10px;
+    padding: 15px;
+    background: #1e293b;
+    border-radius: 12px;
+    position: relative;
+}
+
+.botao-remover {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #475569;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.botao-remover:hover {
+    color: #ef4444;
+}
+
+/* ===== Tela Campeão ===== */
+
+#overlayCampeao {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.95);
+    backdrop-filter: blur(10px);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9999;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.overlay-foto {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    margin: 20px;
+    animation: girarMoeda 6s linear infinite;
+    box-shadow: 0 0 30px rgba(255,215,0,0.4);
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🏆 Ranking de Vendas</h1>
+<p style="opacity:0.6;">Boas vendas a todos...</p>
+
+<div style="margin-top:30px;">
+    <input type="text" id="nome" placeholder="Nome do vendedor">
+    <input type="number" id="valor" placeholder="Valor vendido">
+    <input type="file" id="foto" accept="image/*">
+    <button onclick="adicionarVendedor()">Adicionar</button>
+</div>
+
+<div style="margin-top:50px; display:flex; justify-content:center; gap:60px;">
+    <div style="width:250px;">
+        <h2>🥇 1º Lugar</h2>
+        <div id="primeiro">---</div>
+    </div>
+
+    <div style="width:200px;">
+        <h2>🥈 2º Lugar</h2>
+        <div id="segundo">---</div>
+    </div>
+
+    <div style="width:200px;">
+        <h2>🥉 3º Lugar</h2>
+        <div id="terceiro">---</div>
+    </div>
+</div>
+
+<h2 style="margin-top:60px;">📋 Todos os vendedores</h2>
+<div id="lista" style="max-width:600px; margin:auto;"></div>
+
+<!-- Overlay campeão -->
+<div id="overlayCampeao">
+    <h1 style="font-size:40px;">👑 Campeão de Vendas 👑</h1>
+    <div id="overlayConteudo"></div>
+</div>
+
+<script>
+
+let vendedores = [];
+let ultimoPrimeiro = null;
+
+let dadosSalvos = localStorage.getItem("ranking");
+if (dadosSalvos) vendedores = JSON.parse(dadosSalvos);
+
+function adicionarVendedor() {
+
+    let nome = document.getElementById("nome").value;
+    let valor = parseFloat(document.getElementById("valor").value);
+    let fotoInput = document.getElementById("foto");
+
+    if(nome === "" || isNaN(valor)) return alert("Preencha corretamente");
+
+    if (fotoInput.files[0]) {
+        let reader = new FileReader();
+        reader.onload = e => salvarVendedor(nome, valor, e.target.result);
+        reader.readAsDataURL(fotoInput.files[0]);
+    } else {
+        salvarVendedor(nome, valor, "");
+    }
+}
+
+function salvarVendedor(nome, valor, foto) {
+
+    let existente = vendedores.find(v => v.nome === nome);
+
+    if (existente) {
+        existente.valor = valor;
+        if (!existente.foto && foto) existente.foto = foto;
+    } else {
+        vendedores.push({nome, valor, foto});
+    }
+
+    atualizarRanking();
+
+    document.getElementById("nome").value = "";
+    document.getElementById("valor").value = "";
+    document.getElementById("foto").value = "";
+}
+
+function atualizarRanking() {
+
+    vendedores.sort((a,b)=>b.valor-a.valor);
+
+    if (vendedores[0] && vendedores[0].nome !== ultimoPrimeiro) {
+        mostrarCampeao(vendedores[0]);
+        ultimoPrimeiro = vendedores[0].nome;
+    }
+
+    document.getElementById("primeiro").innerHTML =
+        vendedores[0] ? `
+        <div class="campeao-card">
+            ${vendedores[0].foto ? `<img src="${vendedores[0].foto}" class="foto-campeao">` : ""}
+            <div style="font-weight:600;">${vendedores[0].nome}</div>
+            <div style="opacity:0.7;">
+                ${vendedores[0].valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+            </div>
+        </div>` : "---";
+
+    document.getElementById("segundo").innerHTML =
+        vendedores[1] ? vendedores[1].nome : "---";
+
+    document.getElementById("terceiro").innerHTML =
+        vendedores[2] ? vendedores[2].nome : "---";
+
+    let listaHTML="";
+    vendedores.forEach((v,i)=>{
+        listaHTML+=`
+        <div class="card">
+            <button class="botao-remover" onclick="removerVendedor(${i})">-</button>
+            <strong>${v.nome}</strong><br>
+            ${v.valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+        </div>`;
+    });
+
+    document.getElementById("lista").innerHTML=listaHTML;
+
+    localStorage.setItem("ranking", JSON.stringify(vendedores));
+}
+
+function removerVendedor(i){
+    if(confirm("Remover vendedor?")){
+        vendedores.splice(i,1);
+        atualizarRanking();
+    }
+}
+
+function mostrarCampeao(vendedor){
+
+    let overlay = document.getElementById("overlayCampeao");
+    let conteudo = document.getElementById("overlayConteudo");
+
+    conteudo.innerHTML = `
+        ${vendedor.foto ? `<img src="${vendedor.foto}" class="overlay-foto">` : ""}
+        <h2>${vendedor.nome}</h2>
+        <p>${vendedor.valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
+    `;
+
+    overlay.style.display="flex";
+
+    soltarFogos();
+
+    setTimeout(()=>{
+        overlay.style.display="none";
+    },4000);
+}
+
+function soltarFogos(){
+
+    for(let i=0;i<35;i++){
+        let c=document.createElement("div");
+        c.style.position="fixed";
+        c.style.width="8px";
+        c.style.height="8px";
+        c.style.borderRadius="50%";
+        c.style.background="hsl("+Math.random()*360+",100%,60%)";
+        c.style.top="50%";
+        c.style.left="50%";
+        c.style.zIndex="10000";
+        document.body.appendChild(c);
+
+        let x=(Math.random()-0.5)*600;
+        let y=(Math.random()-0.5)*600;
+
+        c.animate([
+            {transform:"translate(0,0)",opacity:1},
+            {transform:`translate(${x}px,${y}px)`,opacity:0}
+        ],{duration:2000,easing:"ease-out"});
+
+        setTimeout(()=>c.remove(),2000);
+    }
+}
+
+atualizarRanking();
+
+</script>
+
+</body>
+</html>
+</script>
+
+</body>
+</html>
+
