@@ -13,7 +13,90 @@ body {
     margin: 0;
 }
 
-/* ===== Campeão ===== */
+/* Remove setinhas */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.top-input {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: white;
+}
+
+.valor-input {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 10px;
+    margin-top: 10px;
+    width: 140px;
+    text-align: center;
+    color: #22c55e;
+    font-weight: bold;
+    font-size: 16px;
+    outline: none;
+    transition: 0.2s;
+}
+
+.valor-input:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 10px rgba(34,197,94,0.4);
+}
+
+.nome-input {
+    background: none;
+    border: none;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+    font-size: 16px;
+}
+.nome-input:focus {
+    outline: none;
+    border-bottom: 1px solid #475569;
+}
+
+.loja-badge {
+    background: #334155;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-top: 6px;
+    display: inline-block;
+    opacity: 0.8;
+}
+
+.card {
+    margin: 10px;
+    padding: 20px;
+    background: #1e293b;
+    border-radius: 16px;
+    position: relative;
+}
+
+.botao-remover {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #475569;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.botao-remover:hover {
+    color: #ef4444;
+}
 
 @keyframes girarMoeda {
     from { transform: rotateY(0deg); }
@@ -38,33 +121,6 @@ body {
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
-/* ===== Lista ===== */
-
-.card {
-    margin: 10px;
-    padding: 15px;
-    background: #1e293b;
-    border-radius: 12px;
-    position: relative;
-}
-
-.botao-remover {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    background: none;
-    border: none;
-    color: #475569;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.botao-remover:hover {
-    color: #ef4444;
-}
-
-/* ===== Tela Campeão ===== */
-
 #overlayCampeao {
     display: none;
     position: fixed;
@@ -75,12 +131,6 @@ body {
     align-items: center;
     flex-direction: column;
     z-index: 9999;
-    animation: fadeIn 0.4s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
 }
 
 .overlay-foto {
@@ -91,20 +141,18 @@ body {
     animation: girarMoeda 6s linear infinite;
     box-shadow: 0 0 30px rgba(255,215,0,0.4);
 }
-
 </style>
 </head>
 
 <body>
 
 <h1>🏆 Ranking de Vendas</h1>
-<p style="opacity:0.6;">Boas vendas a todos...</p>
 
 <div style="margin-top:30px;">
-    <input type="text" id="nome" placeholder="Nome do vendedor">
-    <input type="number" id="valor" placeholder="Valor vendido">
-    <input type="file" id="foto" accept="image/*">
-    <button onclick="adicionarVendedor()">Adicionar</button>
+    <input type="text" id="nome" placeholder="Novo vendedor" class="top-input">
+    <input type="text" id="loja" placeholder="Loja" class="top-input">
+    <input type="file" id="foto">
+    <button onclick="adicionarVendedor()">Criar Vendedor</button>
 </div>
 
 <div style="margin-top:50px; display:flex; justify-content:center; gap:60px;">
@@ -127,7 +175,6 @@ body {
 <h2 style="margin-top:60px;">📋 Todos os vendedores</h2>
 <div id="lista" style="max-width:600px; margin:auto;"></div>
 
-<!-- Overlay campeão -->
 <div id="overlayCampeao">
     <h1 style="font-size:40px;">👑 Campeão de Vendas 👑</h1>
     <div id="overlayConteudo"></div>
@@ -143,37 +190,43 @@ if (dadosSalvos) vendedores = JSON.parse(dadosSalvos);
 
 function adicionarVendedor() {
 
-    let nome = document.getElementById("nome").value;
-    let valor = parseFloat(document.getElementById("valor").value);
+    let nome = document.getElementById("nome").value.trim();
+    let loja = document.getElementById("loja").value.trim();
     let fotoInput = document.getElementById("foto");
 
-    if(nome === "" || isNaN(valor)) return alert("Preencha corretamente");
+    if(nome === "" || loja === "") return alert("Preencha nome e loja");
+
+    let existente = vendedores.find(v => v.nome.toLowerCase() === nome.toLowerCase());
+    if (existente) return alert("Vendedor já existe.");
 
     if (fotoInput.files[0]) {
         let reader = new FileReader();
-        reader.onload = e => salvarVendedor(nome, valor, e.target.result);
+        reader.onload = e => {
+            vendedores.push({nome, loja, valor:0, foto:e.target.result});
+            atualizarRanking();
+        };
         reader.readAsDataURL(fotoInput.files[0]);
     } else {
-        salvarVendedor(nome, valor, "");
+        vendedores.push({nome, loja, valor:0, foto:""});
+        atualizarRanking();
     }
-}
-
-function salvarVendedor(nome, valor, foto) {
-
-    let existente = vendedores.find(v => v.nome === nome);
-
-    if (existente) {
-        existente.valor = valor;
-        if (!existente.foto && foto) existente.foto = foto;
-    } else {
-        vendedores.push({nome, valor, foto});
-    }
-
-    atualizarRanking();
 
     document.getElementById("nome").value = "";
-    document.getElementById("valor").value = "";
+    document.getElementById("loja").value = "";
     document.getElementById("foto").value = "";
+}
+
+function editarNome(i, novoNome){
+    if(novoNome.trim()==="") return;
+    vendedores[i].nome = novoNome.trim();
+    atualizarRanking();
+}
+
+function editarValor(i, novoValor){
+    let valor = parseFloat(novoValor);
+    if(isNaN(valor)) return;
+    vendedores[i].valor = valor;
+    atualizarRanking();
 }
 
 function atualizarRanking() {
@@ -190,6 +243,7 @@ function atualizarRanking() {
         <div class="campeao-card">
             ${vendedores[0].foto ? `<img src="${vendedores[0].foto}" class="foto-campeao">` : ""}
             <div style="font-weight:600;">${vendedores[0].nome}</div>
+            <div class="loja-badge">${vendedores[0].loja}</div>
             <div style="opacity:0.7;">
                 ${vendedores[0].valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
             </div>
@@ -206,8 +260,14 @@ function atualizarRanking() {
         listaHTML+=`
         <div class="card">
             <button class="botao-remover" onclick="removerVendedor(${i})">-</button>
-            <strong>${v.nome}</strong><br>
-            ${v.valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+
+            <input type="text" class="nome-input" value="${v.nome}"
+                onkeydown="if(event.key==='Enter'){editarNome(${i}, this.value)}">
+
+            <div class="loja-badge">${v.loja}</div>
+
+            <input type="number" class="valor-input" value="${v.valor}"
+                onkeydown="if(event.key==='Enter'){editarValor(${i}, this.value)}">
         </div>`;
     });
 
@@ -231,42 +291,15 @@ function mostrarCampeao(vendedor){
     conteudo.innerHTML = `
         ${vendedor.foto ? `<img src="${vendedor.foto}" class="overlay-foto">` : ""}
         <h2>${vendedor.nome}</h2>
+        <div class="loja-badge">${vendedor.loja}</div>
         <p>${vendedor.valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</p>
     `;
 
     overlay.style.display="flex";
 
-    soltarFogos();
-
     setTimeout(()=>{
         overlay.style.display="none";
     },4000);
-}
-
-function soltarFogos(){
-
-    for(let i=0;i<35;i++){
-        let c=document.createElement("div");
-        c.style.position="fixed";
-        c.style.width="8px";
-        c.style.height="8px";
-        c.style.borderRadius="50%";
-        c.style.background="hsl("+Math.random()*360+",100%,60%)";
-        c.style.top="50%";
-        c.style.left="50%";
-        c.style.zIndex="10000";
-        document.body.appendChild(c);
-
-        let x=(Math.random()-0.5)*600;
-        let y=(Math.random()-0.5)*600;
-
-        c.animate([
-            {transform:"translate(0,0)",opacity:1},
-            {transform:`translate(${x}px,${y}px)`,opacity:0}
-        ],{duration:2000,easing:"ease-out"});
-
-        setTimeout(()=>c.remove(),2000);
-    }
 }
 
 atualizarRanking();
@@ -275,8 +308,3 @@ atualizarRanking();
 
 </body>
 </html>
-</script>
-
-</body>
-</html>
-
