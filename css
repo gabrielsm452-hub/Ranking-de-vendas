@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking de Vendas</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>🏆 Ranking de Vendas</h1>
+
+<div class="topo">
+    <input type="text" id="nome" placeholder="Novo vendedor" class="top-input">
+    <input type="text" id="loja" placeholder="Loja" class="top-input">
+    <input type="file" id="foto">
+    <button onclick="adicionarVendedor()">Criar Vendedor</button>
+</div>
+
+<div class="ranking-top3">
+    <div class="posicao">
+        <h2>🥇 1º Lugar</h2>
+        <div id="primeiro">---</div>
+    </div>
+
+    <div class="posicao">
+        <h2>🥈 2º Lugar</h2>
+        <div id="segundo">---</div>
+    </div>
+
+    <div class="posicao">
+        <h2>🥉 3º Lugar</h2>
+        <div id="terceiro">---</div>
+    </div>
+</div>
+
+<h2 class="titulo-lista">📋 Todos os vendedores</h2>
+<div id="lista" class="lista"></div>
+
+<div id="overlayCampeao">
+    <h1 class="overlay-titulo">👑 Campeão de Vendas 👑</h1>
+    <div id="overlayConteudo"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
